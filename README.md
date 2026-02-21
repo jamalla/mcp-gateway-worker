@@ -124,6 +124,81 @@ curl -s -X POST https://mcp-gateway-worker.to-jamz.workers.dev/mcp \
 
 If your IDE uses a different MCP schema (for example command-based wrappers), map it to the same HTTP endpoint and headers above.
 
+### IDE-specific examples
+
+The exact file path/key name can vary by IDE version, but these templates are the common setup patterns.
+
+#### VS Code (MCP extension/client)
+
+`settings.json` example:
+
+```json
+{
+	"mcp.servers": {
+		"mcp-gateway-worker": {
+			"transport": "http",
+			"url": "https://mcp-gateway-worker.to-jamz.workers.dev/mcp",
+			"headers": {
+				"Authorization": "Bearer <CLIENT_AUTH_TOKEN>"
+			}
+		}
+	}
+}
+```
+
+#### Cursor
+
+`.cursor/mcp.json` example:
+
+```json
+{
+	"mcpServers": {
+		"mcp-gateway-worker": {
+			"transport": "http",
+			"url": "https://mcp-gateway-worker.to-jamz.workers.dev/mcp",
+			"headers": {
+				"Authorization": "Bearer <CLIENT_AUTH_TOKEN>"
+			}
+		}
+	}
+}
+```
+
+#### Windsurf
+
+MCP config example:
+
+```json
+{
+	"mcpServers": {
+		"mcp-gateway-worker": {
+			"transport": "http",
+			"url": "https://mcp-gateway-worker.to-jamz.workers.dev/mcp",
+			"headers": {
+				"Authorization": "Bearer <CLIENT_AUTH_TOKEN>"
+			}
+		}
+	}
+}
+```
+
+#### JetBrains AI Assistant / IDE MCP client
+
+MCP server entry example:
+
+```json
+{
+	"name": "mcp-gateway-worker",
+	"transport": "http",
+	"url": "https://mcp-gateway-worker.to-jamz.workers.dev/mcp",
+	"headers": {
+		"Authorization": "Bearer <CLIENT_AUTH_TOKEN>"
+	}
+}
+```
+
+If your IDE only supports command-based MCP launchers, create a tiny local proxy/wrapper that forwards to this HTTP endpoint with the same `Authorization` header.
+
 ## Examples
 
 ```bash

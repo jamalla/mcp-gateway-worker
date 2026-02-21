@@ -1,0 +1,25 @@
+name = "mcp-gateway-worker"
+main = "src/index.ts"
+compatibility_date = "2025-02-21"
+
+[vars]
+# Runtime environment label
+ENVIRONMENT = "local"
+
+# Domain worker URLs for local development
+DOMAIN_A_URL = "http://127.0.0.1:8788"
+DOMAIN_B_URL = "http://127.0.0.1:8789"
+
+# Comma-separated browser origin allowlist
+ALLOWED_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000"
+
+# Client auth mode and static token configuration (Phase 2+)
+AUTH_MODE = "static-token"
+CLIENT_AUTH_TOKEN = "replace-me"
+CLIENT_ALLOWED_SCOPES = "read:greetings,customers:read,math:execute,text:transform"
+
+[dev]
+port = 8787
+
+# Configure secret once per environment:
+# pnpm wrangler secret put DOMAIN_SHARED_SECRET

@@ -1,0 +1,271 @@
+openapi: 3.1.0
+info:
+  title: MCP Gateway Worker API
+  version: 1.0.0
+  description: REST and MCP-compatible gateway contracts for local and client integration.
+servers:
+  - url: http://127.0.0.1:8787
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  environment:
+                    type: string
+                    example: local
+                required: [status, environment]
+  /tools:
+    get:
+      summary: List aggregated tools from Domain A and Domain B
+      parameters:
+        - in: header
+          name: x-scopes
+          required: false
+          schema:
+            type: string
+            example: customers:read,math:sum,text:normalize
+      responses:
+        '200':
+          description: Unified tool catalog
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolsListResponse'
+              examples:
+                success:
+                  value:
+                    tools:
+                      - name: hello
+                        domain: domain-a
+                        required_scopes: [greetings:read]
+                      - name: list-top-customers
+                        domain: domain-a
+                        required_scopes: [customers:read]
+                      - name: sum
+                        domain: domain-b
+                        required_scopes: [math:sum]
+                      - name: normalize-text
+                        domain: domain-b
+                        required_scopes: [text:normalize]
+  /tools/{name}/call:
+    post:
+      summary: Invoke tool over REST test interface
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-scopes
+          required: true
+          schema:
+            type: string
+            example: customers:read
+        - in: header
+          name: x-tenant-id
+          required: false
+          schema:
+            type: string
+        - in: header
+          name: x-actor-id
+          required: false
+          schema:
+            type: string
+        - in: header
+          name: Origin
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                arguments:
+                  type: object
+              required: [arguments]
+            examples:
+              call-sum:
+                value:
+                  arguments:
+                    a: 2
+                    b: 5
+      responses:
+        '200':
+          description: Tool execution result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolCallSuccess'
+        '403':
+          description: Forbidden or missing scope
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanonicalError'
+        '404':
+          description: Tool not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanonicalError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanonicalError'
+        '502':
+          description: Upstream error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanonicalError'
+  /mcp:
+    post:
+      summary: MCP-compatible JSON-RPC endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JsonRpcRequest'
+            examples:
+              tools-list:
+                value:
+                  jsonrpc: '2.0'
+                  id: req-1
+                  method: tools/list
+                  params: {}
+              tools-call:
+                value:
+                  jsonrpc: '2.0'
+                  id: req-2
+                  method: tools/call
+                  params:
+                    name: sum
+                    arguments:
+                      a: 4
+                      b: 6
+      responses:
+        '200':
+          description: JSON-RPC success or error envelope
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/JsonRpcSuccess'
+                  - $ref: '#/components/schemas/JsonRpcError'
+              examples:
+                scope-missing:
+                  value:
+                    jsonrpc: '2.0'
+                    id: req-2
+                    error:
+                      code: -32010
+                      message: Missing required scope(s)
+                      data:
+                        error_code: SCOPE_MISSING
+                        request_id: r-123
+                        missing_scopes: [math:sum]
+components:
+  schemas:
+    ToolsListResponse:
+      type: object
+      properties:
+        tools:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              domain: { type: string, enum: [domain-a, domain-b] }
+              required_scopes:
+                type: array
+                items: { type: string }
+            required: [name, domain, required_scopes]
+      required: [tools]
+    ToolCallSuccess:
+      type: object
+      properties:
+        request_id: { type: string }
+        result: { type: object }
+      required: [request_id, result]
+    CanonicalError:
+      type: object
+      properties:
+        request_id: { type: string }
+        error:
+          type: object
+          properties:
+            error_code:
+              type: string
+              enum: [TOOL_NOT_FOUND, SCOPE_MISSING, VALIDATION_ERROR, UPSTREAM_ERROR, FORBIDDEN]
+            message: { type: string }
+            details: { type: object }
+          required: [error_code, message]
+      required: [request_id, error]
+    JsonRpcRequest:
+      type: object
+      properties:
+        jsonrpc: { type: string, const: '2.0' }
+        id:
+          oneOf:
+            - { type: string }
+            - { type: integer }
+            - { type: 'null' }
+        method:
+          type: string
+          enum: [tools/list, tools/call]
+        params:
+          type: object
+      required: [jsonrpc, id, method, params]
+    JsonRpcSuccess:
+      type: object
+      properties:
+        jsonrpc: { type: string, const: '2.0' }
+        id:
+          oneOf:
+            - { type: string }
+            - { type: integer }
+            - { type: 'null' }
+        result: { type: object }
+      required: [jsonrpc, id, result]
+    JsonRpcError:
+      type: object
+      properties:
+        jsonrpc: { type: string, const: '2.0' }
+        id:
+          oneOf:
+            - { type: string }
+            - { type: integer }
+            - { type: 'null' }
+        error:
+          type: object
+          properties:
+            code: { type: integer }
+            message: { type: string }
+            data:
+              type: object
+              properties:
+                error_code:
+                  type: string
+                  enum: [TOOL_NOT_FOUND, SCOPE_MISSING, VALIDATION_ERROR, UPSTREAM_ERROR, FORBIDDEN]
+                request_id: { type: string }
+                details: { type: object }
+              required: [error_code, request_id]
+          required: [code, message, data]
+      required: [jsonrpc, id, error]

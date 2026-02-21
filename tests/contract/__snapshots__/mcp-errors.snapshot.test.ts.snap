@@ -1,0 +1,19 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`MCP error snapshots > normalizes upstream failures to canonical UPSTREAM_ERROR 1`] = `
+{
+  "error": {
+    "code": -32020,
+    "data": {
+      "details": {
+        "cause": "network down",
+      },
+      "error_code": "UPSTREAM_ERROR",
+      "request_id": "<request_id>",
+    },
+    "message": "Upstream service failed",
+  },
+  "id": "upstream-1",
+  "jsonrpc": "2.0",
+}
+`;

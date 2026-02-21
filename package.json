@@ -1,0 +1,26 @@
+{
+  "name": "mcp-gateway-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.6.0",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "tsc --noEmit",
+    "test": "vitest run",
+    "test:contract": "vitest run tests/contract",
+    "test:validation": "vitest run tests/validation",
+    "test:e2e": "vitest run tests/e2e",
+    "test:snapshots": "vitest run tests/contract/mcp-errors.snapshot.test.ts"
+  },
+  "dependencies": {
+    "hono": "^4.7.2",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250214.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.7",
+    "wrangler": "^3.107.3"
+  }
+}
